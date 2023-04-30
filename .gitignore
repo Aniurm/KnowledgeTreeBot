@@ -34,3 +34,4 @@ go.work
 /.vscode/
 .idea
 lemonconfig*
+config/config.yaml
