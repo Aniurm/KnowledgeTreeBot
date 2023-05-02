@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"xlab-feishu-robot/docs"
 	config "xlab-feishu-robot/internal/config"
+	"xlab-feishu-robot/internal/controller"
 	"xlab-feishu-robot/internal/log"
 
 	"xlab-feishu-robot/internal/pkg"
@@ -34,6 +35,9 @@ func main() {
 	// api docs by swagger
 	docs.SwaggerInfo.BasePath = "/"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+
+	// Start reminder
+	controller.Remind()
 
 	r.Run(":" + fmt.Sprint(config.C.Server.Port))
 }
