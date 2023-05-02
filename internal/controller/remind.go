@@ -26,4 +26,5 @@ func Remind() {
 		panic(err)
 		logrus.Error("Failed to add cron job")
 	}
+	cronTimer.Start()
 }
