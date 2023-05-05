@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/YasyaKarasu/feishuapi"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
@@ -23,8 +24,38 @@ func Remind() {
 		pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, remindGroupMembersStart)
 	})
 	if err != nil {
-		panic(err)
 		logrus.Error("Failed to add cron job")
+		panic(err)
 	}
+	logrus.Info("Added cron job on the 1st of every month at 10:00")
+
+	// Every 15th of the month at 10:00, check who has not written the knowledge tree document
+	_, err = cronTimer.AddFunc("0 10 15 * *", func() {
+		// TODO: get the user ID of persons who has not written the knowledge tree document
+	})
+
+	fmt.Println(getAllBlocksInDoc())
+
 	cronTimer.Start()
+}
+
+// getPersonsNotWritten gets the user ID of persons who has not written the knowledge tree document
+func getPersonsNotWritten() {
+
+}
+
+func getAllBlocksInDoc() []feishuapi.BlockInfo {
+	documentID := getKnowledgeTreeDocumentID()
+	logrus.Info("Document ID: ", documentID)
+	return pkg.Cli.DocumentGetAllBlocks(documentID, feishuapi.UserId)
+}
+
+func selectTablesFromBlocks(blocks []feishuapi.BlockInfo) []feishuapi.TableInfo {
+	return nil
+}
+
+func getKnowledgeTreeDocumentID() string {
+	logrus.Info("Node token: ", config.C.Info.NodeToken)
+	nodeInfo := pkg.Cli.KnowledgeSpaceGetNodeInfo(config.C.Info.NodeToken)
+	return nodeInfo.ObjToken
 }

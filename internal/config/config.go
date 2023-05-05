@@ -15,7 +15,7 @@ type Config struct {
 	// add your configuration fields here
 	Info struct {
 		GroupID          string
-		DocumentID       string
+		NodeToken        string
 		PersonInChargeID string
 	}
 }
