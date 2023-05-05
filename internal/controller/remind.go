@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"github.com/YasyaKarasu/feishuapi"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
@@ -43,13 +44,22 @@ func getPersonsNotWritten() {
 
 // getIDOfPersonWritten get the ID of persons who has written the knowledge tree document
 func getIDOfPersonWritten() []string {
-
+	return nil
 }
 
-func getLatestRecord() []feishuapi.RecordInfo {
+func getLatestRecords() []feishuapi.RecordInfo {
 	bitable := pkg.Cli.DocumentGetAllBitables(getKnowledgeTreeDocumentID())[0]
 	table := pkg.Cli.DocumentGetAllTables(bitable.AppToken)[0]
 	return pkg.Cli.DocumentGetAllRecords(table.AppToken, table.TableId)
+}
+
+func getRecordFieldRawContent(record feishuapi.RecordInfo) string {
+	jsonString, err := json.Marshal(record.Fields)
+	if err != nil {
+		logrus.Error("Error converting map to string:", err)
+		return ""
+	}
+	return string(jsonString)
 }
 
 func getKnowledgeTreeDocumentID() string {
