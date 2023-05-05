@@ -43,9 +43,8 @@ func getPersonsNotWritten() {
 	return
 }
 
-// getIDOfPersonWritten get the ID of persons who has written the knowledge tree document
-func getIDOfPersonWritten() []string {
-	result := make([]string, 0)
+// getPersonWritten get the persons who has written the knowledge tree document, store in a map
+func getPersonWritten() (result map[string]bool) {
 	allRecords := getLatestRecords()
 	for _, record := range allRecords {
 		// Check if the field value is a slice of interfaces
@@ -64,7 +63,7 @@ func getIDOfPersonWritten() []string {
 
 			for _, maintainer := range maintainers {
 				id := maintainer["id"].(string)
-				result = append(result, id)
+				result[id] = true
 			}
 		} else {
 			logrus.Error("Expected []interface{} but found " + fmt.Sprintf("%T", record.Fields["维护人"]))
