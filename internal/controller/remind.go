@@ -66,8 +66,9 @@ func getPersonsNotWritten() []feishuapi.GroupMember {
 	return result
 }
 
-// getPersonWritten get the persons who has written the knowledge tree document, store in a map
-func getPersonWritten() (result map[string]bool) {
+// getPersonWritten get the persons who have written the knowledge tree document, store in a map
+func getPersonWritten() map[string]bool {
+	result := make(map[string]bool)
 	allRecords := getLatestRecords()
 	for _, record := range allRecords {
 		// Check if the field value is a slice of interfaces
