@@ -32,15 +32,24 @@ func Remind() {
 
 	// Every 15th of the month at 10:00, check who has not written the knowledge tree document
 	_, err = cronTimer.AddFunc("0 10 15 * *", func() {
-		// TODO: get the user ID of persons who has not written the knowledge tree document
+		personsNotWritten := getPersonsNotWritten()
+		// TODO: send message to remind persons who have not written the knowledge tree document
+
 	})
 
 	cronTimer.Start()
 }
 
-// getPersonsNotWritten gets the user ID of persons who has not written the knowledge tree document
-func getPersonsNotWritten() {
-	return
+// getPersonsNotWritten gets persons who have not written the knowledge tree document
+func getPersonsNotWritten() []feishuapi.GroupMember {
+	result := make([]feishuapi.GroupMember, 0)
+	allMembers := pkg.Cli.GroupGetMembers(config.C.Info.GroupID, feishuapi.OpenId)
+	for _, member := range allMembers {
+		if _, ok := getPersonWritten()[member.MemberId]; !ok {
+			result = append(result, member)
+		}
+	}
+	return result
 }
 
 // getPersonWritten get the persons who has written the knowledge tree document, store in a map
@@ -70,15 +79,6 @@ func getPersonWritten() (result map[string]bool) {
 		}
 	}
 
-	return result
-}
-
-func getAllMemberID() []string {
-	result := make([]string, 0)
-	allmember := pkg.Cli.GroupGetMembers(config.C.Info.GroupID, feishuapi.OpenId)
-	for _, member := range allmember {
-		result = append(result, member.MemberId)
-	}
 	return result
 }
 
