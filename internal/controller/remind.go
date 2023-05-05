@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"github.com/robfig/cron/v3"
+	"strings"
 	"xlab-feishu-robot/internal/config"
 	"xlab-feishu-robot/internal/pkg"
 
@@ -33,11 +34,24 @@ func Remind() {
 	// Every 15th of the month at 10:00, check who has not written the knowledge tree document
 	_, err = cronTimer.AddFunc("0 10 15 * *", func() {
 		personsNotWritten := getPersonsNotWritten()
-		// TODO: send message to remind persons who have not written the knowledge tree document
-
+		if len(personsNotWritten) > 0 {
+			sendRemindMessage(personsNotWritten)
+		} else {
+			logrus.Info("All group members have written the knowledge tree document")
+		}
 	})
 
 	cronTimer.Start()
+}
+
+func sendRemindMessage(personsNotWritten []feishuapi.GroupMember) {
+	var sb strings.Builder
+	sb.WriteString("滴滴！查询知识树进度：\n")
+	for _, person := range personsNotWritten {
+		// @ person in the format of <at open_id="xxx">xxx</at>
+		sb.WriteString("<at open_id=\"" + person.MemberId + "\">" + person.Name + "</at>")
+	}
+	pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, sb.String())
 }
 
 // getPersonsNotWritten gets persons who have not written the knowledge tree document
