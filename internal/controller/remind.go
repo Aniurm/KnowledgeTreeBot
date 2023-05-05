@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/YasyaKarasu/feishuapi"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
@@ -12,8 +11,6 @@ import (
 const (
 	remindPersonInCharge    = "请及时创建本月的维护记录"
 	remindGroupMembersStart = "请及时开始写本月的知识树文档"
-	// BlockTypeTable The BlockType of Table
-	BlockTypeTable = 18
 )
 
 func Remind() {
@@ -36,14 +33,23 @@ func Remind() {
 		// TODO: get the user ID of persons who has not written the knowledge tree document
 	})
 
-	getPersonsNotWritten()
-
 	cronTimer.Start()
 }
 
 // getPersonsNotWritten gets the user ID of persons who has not written the knowledge tree document
 func getPersonsNotWritten() {
-	fmt.Println(pkg.Cli.DocumentGetAllBitables(getKnowledgeTreeDocumentID()))
+	return
+}
+
+// getIDOfPersonWritten get the ID of persons who has written the knowledge tree document
+func getIDOfPersonWritten() []string {
+
+}
+
+func getLatestRecord() []feishuapi.RecordInfo {
+	bitable := pkg.Cli.DocumentGetAllBitables(getKnowledgeTreeDocumentID())[0]
+	table := pkg.Cli.DocumentGetAllTables(bitable.AppToken)[0]
+	return pkg.Cli.DocumentGetAllRecords(table.AppToken, table.TableId)
 }
 
 func getKnowledgeTreeDocumentID() string {
