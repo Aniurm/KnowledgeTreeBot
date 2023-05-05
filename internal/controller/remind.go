@@ -2,11 +2,11 @@ package controller
 
 import (
 	"fmt"
+	"github.com/robfig/cron/v3"
 	"xlab-feishu-robot/internal/config"
 	"xlab-feishu-robot/internal/pkg"
 
 	"github.com/YasyaKarasu/feishuapi"
-	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -71,6 +71,15 @@ func getIDOfPersonWritten() []string {
 		}
 	}
 
+	return result
+}
+
+func getAllMemberID() []string {
+	result := make([]string, 0)
+	allmember := pkg.Cli.GroupGetMembers(config.C.Info.GroupID, feishuapi.OpenId)
+	for _, member := range allmember {
+		result = append(result, member.MemberId)
+	}
 	return result
 }
 
