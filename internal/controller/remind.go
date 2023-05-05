@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/YasyaKarasu/feishuapi"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
@@ -35,32 +36,14 @@ func Remind() {
 		// TODO: get the user ID of persons who has not written the knowledge tree document
 	})
 
+	getPersonsNotWritten()
+
 	cronTimer.Start()
 }
 
 // getPersonsNotWritten gets the user ID of persons who has not written the knowledge tree document
 func getPersonsNotWritten() {
-
-}
-
-func getAllBlocksInDoc() []feishuapi.BlockInfo {
-	documentID := getKnowledgeTreeDocumentID()
-	logrus.Info("Document ID: ", documentID)
-	return pkg.Cli.DocumentGetAllBlocks(documentID, feishuapi.UserId)
-}
-
-func selectTablesFromBlocks(blocks []feishuapi.BlockInfo) []feishuapi.TableInfo {
-	return nil
-}
-
-func getTableBlockIDFromBlocks(blocks []feishuapi.BlockInfo) []string {
-	var tableBlockIDs []string
-	for _, block := range blocks {
-		if block.BlockType == BlockTypeTable {
-			tableBlockIDs = append(tableBlockIDs, block.BlockId)
-		}
-	}
-	return tableBlockIDs
+	fmt.Println(pkg.Cli.DocumentGetAllBitables(getKnowledgeTreeDocumentID()))
 }
 
 func getKnowledgeTreeDocumentID() string {
