@@ -51,6 +51,7 @@ func sendRemindMessage(personsNotWritten []feishuapi.GroupMember) {
 		// @ person in the format of <at open_id="xxx">xxx</at>
 		sb.WriteString("<at open_id=\"" + person.MemberId + "\">" + person.Name + "</at>")
 	}
+	logrus.Info("Remind message: ", sb.String())
 	pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, sb.String())
 }
 
@@ -63,6 +64,7 @@ func getPersonsNotWritten() []feishuapi.GroupMember {
 			result = append(result, member)
 		}
 	}
+	logrus.Info("Persons who have not written the knowledge tree document: ", result)
 	return result
 }
 
@@ -70,6 +72,7 @@ func getPersonsNotWritten() []feishuapi.GroupMember {
 func getPersonWritten() map[string]bool {
 	result := make(map[string]bool)
 	allRecords := getLatestRecords()
+	logrus.Info("All records: ", allRecords)
 	for _, record := range allRecords {
 		// Check if the field value is a slice of interfaces
 		if fieldSlice, ok := record.Fields["维护人"].([]interface{}); ok {
@@ -93,7 +96,7 @@ func getPersonWritten() map[string]bool {
 			logrus.Error("Expected []interface{} but found " + fmt.Sprintf("%T", record.Fields["维护人"]))
 		}
 	}
-
+	logrus.Info("Persons who have written the knowledge tree document: ", result)
 	return result
 }
 
