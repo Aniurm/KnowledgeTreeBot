@@ -1,12 +1,13 @@
 package controller
 
 import (
-	"encoding/json"
+	"fmt"
+	"xlab-feishu-robot/internal/config"
+	"xlab-feishu-robot/internal/pkg"
+
 	"github.com/YasyaKarasu/feishuapi"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
-	"xlab-feishu-robot/internal/config"
-	"xlab-feishu-robot/internal/pkg"
 )
 
 const (
@@ -44,22 +45,39 @@ func getPersonsNotWritten() {
 
 // getIDOfPersonWritten get the ID of persons who has written the knowledge tree document
 func getIDOfPersonWritten() []string {
-	return nil
+	result := make([]string, 0)
+	allRecords := getLatestRecords()
+	for _, record := range allRecords {
+		// Check if the field value is a slice of interfaces
+		if fieldSlice, ok := record.Fields["维护人"].([]interface{}); ok {
+			// Create a new slice to hold the map[string]interface{} values
+			maintainers := make([]map[string]interface{}, len(fieldSlice))
+
+			// Type assert each element to map[string]interface{} and add to the new slice
+			for i, elem := range fieldSlice {
+				if maintainerMap, ok := elem.(map[string]interface{}); ok {
+					maintainers[i] = maintainerMap
+				} else {
+					logrus.Error("Expected map[string]interface{} but found " + fmt.Sprintf("%T", elem))
+				}
+			}
+
+			for _, maintainer := range maintainers {
+				id := maintainer["id"].(string)
+				result = append(result, id)
+			}
+		} else {
+			logrus.Error("Expected []interface{} but found " + fmt.Sprintf("%T", record.Fields["维护人"]))
+		}
+	}
+
+	return result
 }
 
 func getLatestRecords() []feishuapi.RecordInfo {
 	bitable := pkg.Cli.DocumentGetAllBitables(getKnowledgeTreeDocumentID())[0]
 	table := pkg.Cli.DocumentGetAllTables(bitable.AppToken)[0]
 	return pkg.Cli.DocumentGetAllRecords(table.AppToken, table.TableId)
-}
-
-func getRecordFieldRawContent(record feishuapi.RecordInfo) string {
-	jsonString, err := json.Marshal(record.Fields)
-	if err != nil {
-		logrus.Error("Error converting map to string:", err)
-		return ""
-	}
-	return string(jsonString)
 }
 
 func getKnowledgeTreeDocumentID() string {
