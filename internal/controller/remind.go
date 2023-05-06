@@ -40,7 +40,8 @@ func Remind() {
 	}
 
 	// Every last day of the month at 23:00, send monthly report
-	_, err = cronTimer.AddFunc("0 23 L * *", func() {
+	// TODO: Find out how to get the last day of the month correctly
+	_, err = cronTimer.AddFunc("0 23 30 * *", func() {
 		sendMonthlyReport()
 	})
 	if err != nil {
