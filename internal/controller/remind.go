@@ -59,8 +59,10 @@ func sendRemindMessage(personsNotWritten []feishuapi.GroupMember) {
 func getPersonsNotWritten() []feishuapi.GroupMember {
 	result := make([]feishuapi.GroupMember, 0)
 	allMembers := pkg.Cli.GroupGetMembers(config.C.Info.GroupID, feishuapi.OpenId)
+
+	personsWritten := getPersonWritten()
 	for _, member := range allMembers {
-		if _, ok := getPersonWritten()[member.MemberId]; !ok {
+		if _, ok := personsWritten[member.MemberId]; !ok {
 			result = append(result, member)
 		}
 	}
