@@ -53,9 +53,13 @@ func Remind() {
 	cronTimer.Start()
 }
 
+func sendToGroup(str string) {
+	pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, str)
+}
+
 func remindFirstDay() {
 	pkg.Cli.MessageSend(feishuapi.UserUserId, config.C.Info.PersonInChargeID, feishuapi.Text, remindPersonInChargeString)
-	pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, remindGroupMembersStartString)
+	sendToGroup(remindGroupMembersStartString)
 }
 
 func remindNotWritten(personsNotWritten []feishuapi.GroupMember) {
@@ -66,7 +70,7 @@ func remindNotWritten(personsNotWritten []feishuapi.GroupMember) {
 		sb.WriteString("<at user_id=\"" + person.MemberId + "\">" + person.Name + "</at>")
 	}
 	logrus.Info("Remind message: ", sb.String())
-	pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, sb.String())
+	sendToGroup(sb.String())
 }
 
 // sendMonthlyReport sends monthly report
@@ -89,14 +93,14 @@ func reportNotWritten(personsNotWritten []feishuapi.GroupMember) {
 		sb.WriteString("<at user_id=\"" + person.MemberId + "\">" + person.Name + "</at>")
 	}
 	logrus.Info("Monthly report: ", sb.String())
-	pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, sb.String())
+	sendToGroup(sb.String())
 }
 
 // reportAllWritten sends monthly report when all group members have written the knowledge tree document
 func reportAllWritten() {
 	var sb strings.Builder
 	sb.WriteString("滴滴！本月知识树文档已全部完成。\n")
-	pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, sb.String())
+	sendToGroup(sb.String())
 }
 
 func sendRemindMessage() {
