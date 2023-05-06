@@ -48,8 +48,8 @@ func sendRemindMessage(personsNotWritten []feishuapi.GroupMember) {
 	var sb strings.Builder
 	sb.WriteString("滴滴！查询知识树进度：\n")
 	for _, person := range personsNotWritten {
-		// @ person in the format of <at open_id="xxx">xxx</at>
-		sb.WriteString("<at open_id=\"" + person.MemberId + "\">" + person.Name + "</at>")
+		// @ person in the format of <at user_id="xxx">xxx</at>
+		sb.WriteString("<at user_id=\"" + person.MemberId + "\">" + person.Name + "</at>")
 	}
 	logrus.Info("Remind message: ", sb.String())
 	pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, sb.String())
