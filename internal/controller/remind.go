@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	remindPersonInCharge    = "请及时创建本月的维护记录"
-	remindGroupMembersStart = "请及时开始写本月的知识树文档"
+	remindPersonInChargeString    = "请及时创建本月的维护记录"
+	remindGroupMembersStartString = "请及时开始写本月的知识树文档"
 )
 
 func Remind() {
@@ -22,8 +22,7 @@ func Remind() {
 	// Remind group members to start writing knowledge tree documents
 	// every month on the 1st at 10:00
 	_, err := cronTimer.AddFunc("0 10 1 * *", func() {
-		pkg.Cli.MessageSend(feishuapi.UserUserId, config.C.Info.PersonInChargeID, feishuapi.Text, remindPersonInCharge)
-		pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, remindGroupMembersStart)
+		remindFirstDay()
 	})
 	if err != nil {
 		logrus.Error("Failed to add cron job")
@@ -31,20 +30,34 @@ func Remind() {
 	}
 	logrus.Info("Added cron job on the 1st of every month at 10:00")
 
-	// Every 15th of the month at 10:00, check who has not written the knowledge tree document
-	_, err = cronTimer.AddFunc("0 10 15 * *", func() {
-		personsNotWritten := getPersonsNotWritten()
-		if len(personsNotWritten) > 0 {
-			sendRemindMessage(personsNotWritten)
-		} else {
-			logrus.Info("All group members have written the knowledge tree document")
-		}
+	// Every 15th/23rd of the month at 10:00, check who has not written the knowledge tree document
+	_, err = cronTimer.AddFunc("0 10 15,23 * *", func() {
+		sendRemindMessage()
 	})
+	if err != nil {
+		logrus.Error("Failed to add cron job")
+		panic(err)
+	}
 
+	// Every last day of the month at 23:00, send monthly report
+	_, err = cronTimer.AddFunc("0 23 L * *", func() {
+		sendMonthlyReport()
+	})
+	if err != nil {
+		logrus.Error("Failed to add cron job")
+		panic(err)
+	}
+
+	logrus.Info("Add jobs successfully, going to start cron timer")
 	cronTimer.Start()
 }
 
-func sendRemindMessage(personsNotWritten []feishuapi.GroupMember) {
+func remindFirstDay() {
+	pkg.Cli.MessageSend(feishuapi.UserUserId, config.C.Info.PersonInChargeID, feishuapi.Text, remindPersonInChargeString)
+	pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, remindGroupMembersStartString)
+}
+
+func remindNotWritten(personsNotWritten []feishuapi.GroupMember) {
 	var sb strings.Builder
 	sb.WriteString("滴滴！查询知识树进度：\n")
 	for _, person := range personsNotWritten {
@@ -53,6 +66,36 @@ func sendRemindMessage(personsNotWritten []feishuapi.GroupMember) {
 	}
 	logrus.Info("Remind message: ", sb.String())
 	pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, sb.String())
+}
+
+// sendMonthlyReport sends monthly report
+func sendMonthlyReport() {
+	// Get the persons who did not write the knowledge tree document
+	personsNotWritten := getPersonsNotWritten()
+	if len(personsNotWritten) > 0 {
+		reportNotWritten()
+	} else {
+		reportAllWritten()
+	}
+}
+
+// reportNotWritten sends monthly report when some group members have not written the knowledge tree document
+func reportNotWritten() {
+
+}
+
+// reportAllWritten sends monthly report when all group members have written the knowledge tree document
+func reportAllWritten() {
+
+}
+
+func sendRemindMessage() {
+	personsNotWritten := getPersonsNotWritten()
+	if len(personsNotWritten) > 0 {
+		remindNotWritten(personsNotWritten)
+	} else {
+		logrus.Info("All group members have written the knowledge tree document")
+	}
 }
 
 // getPersonsNotWritten gets persons who have not written the knowledge tree document
