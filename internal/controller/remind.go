@@ -79,6 +79,7 @@ func getPersonWritten() map[string]bool {
 		// Check if the field value is a slice of interfaces
 		if fieldSlice, ok := record.Fields["维护人"].([]interface{}); ok {
 			// Create a new slice to hold the map[string]interface{} values
+			// Get the maintainers of the record
 			maintainers := make([]map[string]interface{}, len(fieldSlice))
 
 			// Type assert each element to map[string]interface{} and add to the new slice
@@ -91,8 +92,11 @@ func getPersonWritten() map[string]bool {
 			}
 
 			for _, maintainer := range maintainers {
-				id := maintainer["id"].(string)
-				result[id] = true
+				// Check whether "维护节点链接" is nil
+				if record.Fields["维护节点链接"] != nil {
+					id := maintainer["id"].(string)
+					result[id] = true
+				}
 			}
 		} else {
 			logrus.Error("Expected []interface{} but found " + fmt.Sprintf("%T", record.Fields["维护人"]))
