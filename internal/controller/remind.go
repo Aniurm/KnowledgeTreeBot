@@ -73,20 +73,29 @@ func sendMonthlyReport() {
 	// Get the persons who did not write the knowledge tree document
 	personsNotWritten := getPersonsNotWritten()
 	if len(personsNotWritten) > 0 {
-		reportNotWritten()
+		reportNotWritten(personsNotWritten)
 	} else {
 		reportAllWritten()
 	}
 }
 
 // reportNotWritten sends monthly report when some group members have not written the knowledge tree document
-func reportNotWritten() {
-
+func reportNotWritten(personsNotWritten []feishuapi.GroupMember) {
+	var sb strings.Builder
+	sb.WriteString("滴滴！本月未完成知识树的同学：\n")
+	for _, person := range personsNotWritten {
+		// @ person in the format of <at user_id="xxx">xxx</at>
+		sb.WriteString("<at user_id=\"" + person.MemberId + "\">" + person.Name + "</at>")
+	}
+	logrus.Info("Monthly report: ", sb.String())
+	pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, sb.String())
 }
 
 // reportAllWritten sends monthly report when all group members have written the knowledge tree document
 func reportAllWritten() {
-
+	var sb strings.Builder
+	sb.WriteString("滴滴！本月知识树文档已全部完成。\n")
+	pkg.Cli.MessageSend(feishuapi.GroupChatId, config.C.Info.GroupID, feishuapi.Text, sb.String())
 }
 
 func sendRemindMessage() {
