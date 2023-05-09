@@ -1,0 +1,18 @@
+feishu:
+  # 该区域请于飞书开放平台查询本机器人信息,详见
+  # https://open.feishu.cn/document/home/develop-a-bot-in-5-minutes/coding
+  appId: 
+  appSecret: 
+  verificationToken: 
+  encryptKey: 
+  larkHost: "https://open.feishu.cn"
+
+
+server:
+  port: 10001
+
+
+Info:
+  groupID: abd
+  nodeToken: abc
+  personInChargeID: abc
