@@ -2,10 +2,11 @@ package controller
 
 import (
 	"fmt"
-	"github.com/robfig/cron/v3"
 	"strings"
 	"xlab-feishu-robot/internal/config"
 	"xlab-feishu-robot/internal/pkg"
+
+	"github.com/robfig/cron/v3"
 
 	"github.com/YasyaKarasu/feishuapi"
 	"github.com/sirupsen/logrus"
@@ -57,7 +58,7 @@ func sendToGroup(str string) {
 }
 
 func remindFirstDay() {
-	pkg.Cli.MessageSend(feishuapi.UserUserId, config.C.Info.PersonInChargeID, feishuapi.Text, remindPersonInChargeString)
+	pkg.Cli.MessageSend(feishuapi.UserOpenId, config.C.Info.PersonInChargeID, feishuapi.Text, remindPersonInChargeString)
 	sendToGroup(remindGroupMembersStartString)
 }
 

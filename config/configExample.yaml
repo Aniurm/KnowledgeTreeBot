@@ -15,4 +15,4 @@ server:
 Info:
   groupID: abd
   nodeToken: abc
-  personInChargeID: abc
+  personInChargeID: （此处应该填写user的open_id）
