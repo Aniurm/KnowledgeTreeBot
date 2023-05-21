@@ -69,6 +69,8 @@ func remindNotWritten(personsNotWritten []feishuapi.GroupMember) {
 		// @ person in the format of <at user_id="xxx">xxx</at>
 		sb.WriteString("<at user_id=\"" + person.MemberId + "\">" + person.Name + "</at>")
 	}
+	sb.WriteString(" \n知识树维护链接：")
+	sb.WriteString(config.C.Info.KnowledgeTreeURL)
 	logrus.Info("Remind message: ", sb.String())
 	sendToGroup(sb.String())
 }

@@ -17,6 +17,7 @@ type Config struct {
 		GroupID          string
 		NodeToken        string
 		PersonInChargeID string
+		KnowledgeTreeURL string
 	}
 }
 
