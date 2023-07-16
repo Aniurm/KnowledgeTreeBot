@@ -17,3 +17,8 @@ Info:
   nodeToken: abc
   personInChargeID: （此处应该填写user的open_id）
   knowledgeTreeURL: abc
+
+whiteList:
+  - abc   # 此处应该填写user的open_id
+  - def
+  - ghi

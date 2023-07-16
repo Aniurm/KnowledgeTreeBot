@@ -19,6 +19,8 @@ type Config struct {
 		PersonInChargeID string
 		KnowledgeTreeURL string
 	}
+
+	WhiteList []string
 }
 
 var C Config

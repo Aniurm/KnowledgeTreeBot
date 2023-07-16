@@ -121,7 +121,9 @@ func getPersonsNotWritten() []feishuapi.GroupMember {
 
 	personsWritten := getPersonWritten()
 	for _, member := range allMembers {
-		if _, ok := personsWritten[member.MemberId]; !ok {
+		if _, ok := personsWritten[member.MemberId]; !ok && !isInWhiteList(member.MemberId) {
+			// If the member is not in the white list and has not written the knowledge tree document
+			// Add the member to the result
 			result = append(result, member)
 		}
 	}
@@ -175,4 +177,14 @@ func getKnowledgeTreeDocumentID() string {
 	logrus.Info("Node token: ", config.C.Info.NodeToken)
 	nodeInfo := pkg.Cli.KnowledgeSpaceGetNodeInfo(config.C.Info.NodeToken)
 	return nodeInfo.ObjToken
+}
+
+// 判断是否在白名单中
+func isInWhiteList(person string) bool {
+	for _, p := range config.C.WhiteList {
+		if p == person {
+			return true
+		}
+	}
+	return false
 }
