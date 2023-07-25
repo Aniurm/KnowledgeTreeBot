@@ -188,3 +188,58 @@ func isInWhiteList(person string) bool {
 	}
 	return false
 }
+
+// Record 定义一个结构，用于存储知识树表格中每一个Record的解析结果
+type Record struct {
+	// 多行文本
+	multiLineText string
+	// 维护人
+	maintainers []Maintainer
+	// 一句话介绍
+	oneLineIntroduction string
+	// 维护的节点链接
+	nodeLink string
+	// 点赞数
+	likeCount int
+}
+
+// Maintainer 定义一个结构，用于存储维护人的信息
+type Maintainer struct {
+	name string
+	id   string
+}
+
+// 从API返回的record的Fields中解析出Record信息
+// 如果某个字段没写，读取map时会返回nil，所以要检查并处理
+func parseRecordFields(record map[string]interface{}) Record {
+	result := Record{}
+	// 解析多行文本
+	if record["多行文本"] != nil {
+		result.multiLineText = record["多行文本"].(string)
+	}
+	// 解析维护人
+	if record["维护人"] != nil {
+		maintainers := record["维护人"].([]interface{})
+		for _, maintainer := range maintainers {
+			maintainerMap := maintainer.(map[string]interface{})
+			result.maintainers = append(result.maintainers, Maintainer{
+				name: maintainerMap["name"].(string),
+				id:   maintainerMap["id"].(string),
+			})
+		}
+	}
+	// 解析一句话介绍
+	if record["一句话介绍"] != nil {
+		result.oneLineIntroduction = record["一句话介绍"].(string)
+	}
+	// 解析维护的节点链接
+	if record["维护节点链接"] != nil {
+		result.nodeLink = record["维护节点链接"].(string)
+	}
+	// 解析点赞数
+	if record["点赞数"] != nil {
+		result.likeCount = int(record["点赞数"].(float64))
+	}
+
+	return result
+}
