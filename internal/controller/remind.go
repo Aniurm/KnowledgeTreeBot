@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"strings"
 	"xlab-feishu-robot/internal/config"
 	"xlab-feishu-robot/internal/pkg"
@@ -134,33 +133,18 @@ func getPersonsNotWritten() []feishuapi.GroupMember {
 // getPersonWritten get the persons who have written the knowledge tree document, store in a map
 func getPersonWritten() map[string]bool {
 	result := make(map[string]bool)
-	allRecords := getLatestRecords()
-	logrus.Info("All records: ", allRecords)
-	for _, record := range allRecords {
-		// Check if the field value is a slice of interfaces
-		if fieldSlice, ok := record.Fields["维护人"].([]interface{}); ok {
-			// Create a new slice to hold the map[string]interface{} values
-			// Get the maintainers of the record
-			maintainers := make([]map[string]interface{}, len(fieldSlice))
-
-			// Type assert each element to map[string]interface{} and add to the new slice
-			for i, elem := range fieldSlice {
-				if maintainerMap, ok := elem.(map[string]interface{}); ok {
-					maintainers[i] = maintainerMap
-				} else {
-					logrus.Error("Expected map[string]interface{} but found " + fmt.Sprintf("%T", elem))
+	allRecordData := getLatestRecords()
+	logrus.Info("All records: ", allRecordData)
+	for _, recordData := range allRecordData {
+		// recordData是请求飞书接口返回的数据，需要解析为容易处理的结构体
+		record := parseRecordFields(recordData.Fields)
+		// 该记录的维护节点链接必须非空，否则不算写了知识树
+		if record.NodeLink != "" {
+			if record.Maintainers != nil {
+				for _, maintainer := range record.Maintainers {
+					result[maintainer.ID] = true
 				}
 			}
-
-			for _, maintainer := range maintainers {
-				// Check whether "维护节点链接" is nil
-				if record.Fields["维护节点链接"] != nil {
-					id := maintainer["id"].(string)
-					result[id] = true
-				}
-			}
-		} else {
-			logrus.Error("Expected []interface{} but found " + fmt.Sprintf("%T", record.Fields["维护人"]))
 		}
 	}
 	logrus.Info("Persons who have written the knowledge tree document: ", result)
@@ -192,21 +176,21 @@ func isInWhiteList(person string) bool {
 // Record 定义一个结构，用于存储知识树表格中每一个Record的解析结果
 type Record struct {
 	// 多行文本
-	multiLineText string
+	MultiLineText string
 	// 维护人
-	maintainers []Maintainer
+	Maintainers []Maintainer
 	// 一句话介绍
-	oneLineIntroduction string
+	OneLineIntroduction string
 	// 维护的节点链接
-	nodeLink string
-	// 点赞数
-	likeCount int
+	NodeLink string
+	// 👍
+	LikeCount int
 }
 
 // Maintainer 定义一个结构，用于存储维护人的信息
 type Maintainer struct {
-	name string
-	id   string
+	Name string
+	ID   string
 }
 
 // 从API返回的record的Fields中解析出Record信息
@@ -215,30 +199,30 @@ func parseRecordFields(record map[string]interface{}) Record {
 	result := Record{}
 	// 解析多行文本
 	if record["多行文本"] != nil {
-		result.multiLineText = record["多行文本"].(string)
+		result.MultiLineText = record["多行文本"].(string)
 	}
 	// 解析维护人
 	if record["维护人"] != nil {
 		maintainers := record["维护人"].([]interface{})
 		for _, maintainer := range maintainers {
 			maintainerMap := maintainer.(map[string]interface{})
-			result.maintainers = append(result.maintainers, Maintainer{
-				name: maintainerMap["name"].(string),
-				id:   maintainerMap["id"].(string),
+			result.Maintainers = append(result.Maintainers, Maintainer{
+				Name: maintainerMap["name"].(string),
+				ID:   maintainerMap["id"].(string),
 			})
 		}
 	}
 	// 解析一句话介绍
 	if record["一句话介绍"] != nil {
-		result.oneLineIntroduction = record["一句话介绍"].(string)
+		result.OneLineIntroduction = record["一句话介绍"].(string)
 	}
 	// 解析维护的节点链接
 	if record["维护节点链接"] != nil {
-		result.nodeLink = record["维护节点链接"].(string)
+		result.NodeLink = record["维护节点链接"].(string)
 	}
 	// 解析点赞数
-	if record["点赞数"] != nil {
-		result.likeCount = int(record["点赞数"].(float64))
+	if record["👍"] != nil {
+		result.LikeCount = int(record["👍"].(float64))
 	}
 
 	return result
