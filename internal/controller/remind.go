@@ -2,6 +2,7 @@ package controller
 
 import (
 	"strings"
+	"time"
 	"xlab-feishu-robot/internal/config"
 	"xlab-feishu-robot/internal/pkg"
 
@@ -153,13 +154,17 @@ func getPersonWritten() map[string]bool {
 	return result
 }
 
-func getLatestRecords() []feishuapi.RecordInfo {
+func getAllTables() []feishuapi.TableInfo {
 	// 注意：DocumentGetAllBitables返回的数组中的所有bitable.AppToken是一样的
 	// 所以这里直接取第一个bitable的AppToken
 	bitable := pkg.Cli.DocumentGetAllBitables(getKnowledgeTreeDocumentID())[0]
 	// bitable里面的所有table相当于知识树文档中的所有表格
+	return pkg.Cli.DocumentGetAllTables(bitable.AppToken)
+}
+
+func getLatestRecords() []feishuapi.RecordInfo {
 	// 最新表格在数组的第一个位置
-	table := pkg.Cli.DocumentGetAllTables(bitable.AppToken)[0]
+	table := getAllTables()[0]
 	return pkg.Cli.DocumentGetAllRecordsWithLinks(table.AppToken, table.TableId)
 }
 
@@ -282,4 +287,26 @@ func parseLinkFromMultilineText(multilineTextData interface{}) []Link {
 		}
 	}
 	return result
+}
+
+func parseTimestamp(timestamp float64) (int, int) {
+	t := time.Unix(int64(timestamp/1000), 0)
+	return t.Year(), int(t.Month())
+}
+
+func getTableByTime(year int, month int) feishuapi.TableInfo {
+	// 获取所有表格
+	allTables := getAllTables()
+	for _, table := range allTables {
+		// 获取表格中的所有记录
+		allRecordsData := pkg.Cli.DocumentGetAllRecordsWithLinks(table.AppToken, table.TableId)
+		for _, recordData := range allRecordsData {
+			record := parseRecordFields(recordData.Fields)
+			recordYear, recordMonth := parseTimestamp(record.TimeStamp)
+			if recordYear == year && recordMonth == month {
+				return table
+			}
+		}
+	}
+	return feishuapi.TableInfo{}
 }
