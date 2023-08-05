@@ -48,6 +48,8 @@ func Remind() {
 		panic(err)
 	}
 
+	logrus.Info(getPersonsNotWritten())
+
 	logrus.Info("Add jobs successfully, going to start cron timer")
 	cronTimer.Start()
 }
@@ -152,9 +154,13 @@ func getPersonWritten() map[string]bool {
 }
 
 func getLatestRecords() []feishuapi.RecordInfo {
+	// 注意：DocumentGetAllBitables返回的数组中的所有bitable.AppToken是一样的
+	// 所以这里直接取第一个bitable的AppToken
 	bitable := pkg.Cli.DocumentGetAllBitables(getKnowledgeTreeDocumentID())[0]
+	// bitable里面的所有table相当于知识树文档中的所有表格
+	// 最新表格在数组的第一个位置
 	table := pkg.Cli.DocumentGetAllTables(bitable.AppToken)[0]
-	return pkg.Cli.DocumentGetAllRecords(table.AppToken, table.TableId)
+	return pkg.Cli.DocumentGetAllRecordsWithLinks(table.AppToken, table.TableId)
 }
 
 func getKnowledgeTreeDocumentID() string {
