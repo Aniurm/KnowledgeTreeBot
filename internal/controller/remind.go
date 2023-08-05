@@ -2,9 +2,10 @@ package controller
 
 import (
 	"strings"
-	"time"
 	"xlab-feishu-robot/internal/config"
+	"xlab-feishu-robot/internal/model"
 	"xlab-feishu-robot/internal/pkg"
+	"xlab-feishu-robot/internal/util"
 
 	"github.com/robfig/cron/v3"
 
@@ -179,123 +180,13 @@ func isInWhiteList(person string) bool {
 	return false
 }
 
-// Record 定义一个结构，用于存储知识树表格中每一个Record的解析结果
-type Record struct {
-	// 多行文本
-	MultiLineText string
-	// 维护人
-	Maintainers []Maintainer
-	// 一句话介绍
-	OneLineIntroduction string
-	// 维护的节点链接
-	NodeLink []Link
-	// 创建时间
-	TimeStamp float64
-	// 👍
-	LikeCount int
-}
-
-func getAllRecordsInTable(table feishuapi.TableInfo) []Record {
+func getAllRecordsInTable(table feishuapi.TableInfo) []model.Record {
 	allRecordData := pkg.Cli.DocumentGetAllRecordsWithLinks(table.AppToken, table.TableId)
-	result := make([]Record, 0)
+	result := make([]model.Record, 0)
 	for _, recordData := range allRecordData {
-		result = append(result, parseRecordFields(recordData.Fields))
+		result = append(result, model.ParseRecordFields(recordData.Fields))
 	}
 	return result
-}
-
-// Maintainer 定义一个结构，用于存储维护人的信息
-type Maintainer struct {
-	Name string
-	ID   string
-}
-
-type Link struct {
-	URL         string
-	Token       string
-	Text        string
-	MentionType string
-}
-
-// 从API返回的record的Fields中解析出Record信息
-// 如果某个字段没写，读取map时会返回nil，所以要检查并处理
-func parseRecordFields(record map[string]interface{}) Record {
-	result := Record{}
-	// 解析多行文本
-	if record["多行文本"] != nil {
-		result.MultiLineText = parseMultilineText(record["多行文本"])
-	}
-	// 解析维护人
-	if record["维护人"] != nil {
-		maintainers := record["维护人"].([]interface{})
-		for _, maintainer := range maintainers {
-			maintainerMap := maintainer.(map[string]interface{})
-			result.Maintainers = append(result.Maintainers, Maintainer{
-				Name: maintainerMap["name"].(string),
-				ID:   maintainerMap["id"].(string),
-			})
-		}
-	}
-	// 解析一句话介绍
-	if record["一句话介绍"] != nil {
-		result.OneLineIntroduction = parseMultilineText(record["一句话介绍"])
-	}
-	// 解析维护的节点链接
-	if record["维护节点链接"] != nil {
-		result.NodeLink = parseLinkFromMultilineText(record["维护节点链接"])
-	}
-	// 解析创建时间
-	if record["创建时间"] != nil {
-		result.TimeStamp = record["创建时间"].(float64)
-	}
-	// 解析点赞数
-	if record["👍"] != nil {
-		result.LikeCount = int(record["👍"].(float64))
-	}
-
-	return result
-}
-
-func parseMultilineText(multilineTextData interface{}) string {
-	// 多行文本的底层数据是一个数组，数组中的每个元素是一个map，这里一步步解析
-	multilineTextMap := multilineTextData.([]interface{})
-	var sb strings.Builder
-	for _, v := range multilineTextMap {
-		currentMap := v.(map[string]interface{})
-		currentText := currentMap["text"]
-		if currentText != nil {
-			sb.WriteString(currentText.(string))
-		}
-	}
-	return sb.String()
-}
-
-func parseLinkFromMultilineText(multilineTextData interface{}) []Link {
-	// 多行文本的底层数据是一个数组，数组中的每个元素是一个map，这里一步步解析
-	multilineTextMap := multilineTextData.([]interface{})
-	var result []Link
-	for _, v := range multilineTextMap {
-		currentMap := v.(map[string]interface{})
-		// 筛选出包含link的map
-		if _, ok := currentMap["link"]; ok {
-			url := currentMap["link"].(string)
-			token := currentMap["token"].(string)
-			text := currentMap["text"].(string)
-			mentionType := currentMap["mentionType"].(string)
-			result = append(result, Link{
-				URL:         url,
-				Token:       token,
-				Text:        text,
-				MentionType: mentionType,
-			})
-		}
-	}
-	return result
-}
-
-func parseTimestamp(timestamp float64) (int, int) {
-	t := time.Unix(int64(timestamp/1000), 0)
-	return t.Year(), int(t.Month())
 }
 
 func getTableByTime(year int, month int) feishuapi.TableInfo {
@@ -305,7 +196,7 @@ func getTableByTime(year int, month int) feishuapi.TableInfo {
 		// 获取表格中的所有记录
 		allRecords := getAllRecordsInTable(table)
 		for _, record := range allRecords {
-			recordYear, recordMonth := parseTimestamp(record.TimeStamp)
+			recordYear, recordMonth := util.ParseTimestamp(record.TimeStamp)
 			if recordYear == year && recordMonth == month {
 				return table
 			}
