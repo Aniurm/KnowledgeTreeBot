@@ -49,8 +49,6 @@ func Remind() {
 		panic(err)
 	}
 
-	logrus.Info(getPersonWritten())
-
 	logrus.Info("Add jobs successfully, going to start cron timer")
 	cronTimer.Start()
 }
@@ -136,14 +134,12 @@ func getPersonsNotWritten() []feishuapi.GroupMember {
 // getPersonWritten get the persons who have written the knowledge tree document, store in a map
 func getPersonWritten() map[string]bool {
 	result := make(map[string]bool)
-	allRecordData := getLatestRecords()
-	logrus.Info("All records: ", allRecordData)
-	for _, recordData := range allRecordData {
-		// recordData是请求飞书接口返回的数据，需要解析为容易处理的结构体
-		record := parseRecordFields(recordData.Fields)
+	allRecords := getAllRecordsInTable(getLatestTable())
+	for _, record := range allRecords {
 		// 该记录的维护节点链接必须非空，否则不算写了知识树
 		if record.NodeLink != nil {
 			if record.Maintainers != nil {
+				// 一个record可能有多个维护者
 				for _, maintainer := range record.Maintainers {
 					result[maintainer.ID] = true
 				}
@@ -162,10 +158,9 @@ func getAllTables() []feishuapi.TableInfo {
 	return pkg.Cli.DocumentGetAllTables(bitable.AppToken)
 }
 
-func getLatestRecords() []feishuapi.RecordInfo {
+func getLatestTable() feishuapi.TableInfo {
 	// 最新表格在数组的第一个位置
-	table := getAllTables()[0]
-	return pkg.Cli.DocumentGetAllRecordsWithLinks(table.AppToken, table.TableId)
+	return getAllTables()[0]
 }
 
 func getKnowledgeTreeDocumentID() string {
@@ -198,6 +193,15 @@ type Record struct {
 	TimeStamp float64
 	// 👍
 	LikeCount int
+}
+
+func getAllRecordsInTable(table feishuapi.TableInfo) []Record {
+	allRecordData := pkg.Cli.DocumentGetAllRecordsWithLinks(table.AppToken, table.TableId)
+	result := make([]Record, 0)
+	for _, recordData := range allRecordData {
+		result = append(result, parseRecordFields(recordData.Fields))
+	}
+	return result
 }
 
 // Maintainer 定义一个结构，用于存储维护人的信息
@@ -299,9 +303,8 @@ func getTableByTime(year int, month int) feishuapi.TableInfo {
 	allTables := getAllTables()
 	for _, table := range allTables {
 		// 获取表格中的所有记录
-		allRecordsData := pkg.Cli.DocumentGetAllRecordsWithLinks(table.AppToken, table.TableId)
-		for _, recordData := range allRecordsData {
-			record := parseRecordFields(recordData.Fields)
+		allRecords := getAllRecordsInTable(table)
+		for _, record := range allRecords {
 			recordYear, recordMonth := parseTimestamp(record.TimeStamp)
 			if recordYear == year && recordMonth == month {
 				return table
