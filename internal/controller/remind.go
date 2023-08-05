@@ -48,7 +48,7 @@ func Remind() {
 		panic(err)
 	}
 
-	logrus.Info(getPersonsNotWritten())
+	logrus.Info(getPersonWritten())
 
 	logrus.Info("Add jobs successfully, going to start cron timer")
 	cronTimer.Start()
@@ -189,6 +189,8 @@ type Record struct {
 	OneLineIntroduction string
 	// 维护的节点链接
 	NodeLink []Link
+	// 创建时间
+	TimeStamp float64
 	// 👍
 	LikeCount int
 }
@@ -232,6 +234,10 @@ func parseRecordFields(record map[string]interface{}) Record {
 	// 解析维护的节点链接
 	if record["维护节点链接"] != nil {
 		result.NodeLink = parseLinkFromMultilineText(record["维护节点链接"])
+	}
+	// 解析创建时间
+	if record["创建时间"] != nil {
+		result.TimeStamp = record["创建时间"].(float64)
 	}
 	// 解析点赞数
 	if record["👍"] != nil {
