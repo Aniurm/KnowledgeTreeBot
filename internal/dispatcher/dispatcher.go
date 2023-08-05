@@ -53,4 +53,49 @@ func Dispatcher(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"challenge": req.Challenge})
 		return
 	}
+
+	if !validateRequest(c, req.Token, string(rawBody)) {
+		logrus.Error("Cannot validate event: ", req)
+		c.String(http.StatusBadRequest, "验证错误")
+		return
+	}
+
+	if eventRepeatDetect(req.EventId) {
+		logrus.Warning("Repeated event: ", req)
+		c.String(http.StatusBadRequest, "事件重复")
+		return
+	}
+
+	if handler, exists := eventMap[req.EventType]; exists {
+		c.String(http.StatusOK, "OK")
+		go handler(req.Event)
+		return
+	} else {
+		logrus.Warn("Failed to find event handler: ", req)
+		// return status ok to avoid retry
+		c.String(http.StatusOK, "无对应处理函数")
+		return
+	}
+}
+
+func validateRequest(c *gin.Context, token string, rawBodyStr string) bool {
+	// check the token and hash in event request header
+
+	if token != config.C.Feishu.VerificationToken {
+		return false
+	}
+	timestamp := c.Request.Header.Get("X-Lark-Request-Timestamp")
+	nonce := c.Request.Header.Get("X-Lark-Request-Nonce")
+	signature := c.Request.Header.Get("X-Lark-Signature")
+
+	return signature == calculateSignature(timestamp, nonce, config.C.Feishu.EncryptKey, rawBodyStr)
+}
+
+func eventRepeatDetect(eventId string) bool {
+	if _, repeated := eventIdList[eventId]; repeated {
+		return true
+	} else {
+		eventIdList[eventId] = true
+		return false
+	}
 }
